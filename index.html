@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>flip. 翻盖手账</title>
+<link rel="icon" id="favIcon">
+<link rel="apple-touch-icon" id="appleIcon">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue","Segoe UI",sans-serif;
+  background:radial-gradient(120% 90% at 50% 0%, #23262d 0%, #14161a 55%, #0b0c0e 100%);
+  overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+  min-height:100svh;
+}
+/* ============ 场景 ============ */
+.flip-scene{perspective:1400px;perspective-origin:50% 40%;display:flex;align-items:center;justify-content:center;width:100%;height:100svh}
+/* ============ 机身 ============ */
+.flip-dev{
+  position:relative;
+  width:min(86vw,330px);height:min(78svh,660px);
+  border-radius:44px;
+  background:linear-gradient(150deg,#3a3f47,#23262b 45%,#191b1f);
+  box-shadow:0 30px 60px -18px rgba(0,0,0,.75),0 4px 14px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.06);
+  transition:width .55s cubic-bezier(.22,1,.36,1),height .55s cubic-bezier(.22,1,.36,1),border-radius .55s;
+  will-change:width,height;
+}
+.flip-dev::after{ /* 铰链高光 */
+  content:"";position:absolute;left:14%;right:14%;bottom:-2px;height:4px;
+  border-radius:4px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.14) 30%,rgba(255,255,255,.05) 70%,transparent);
+  opacity:0;transition:opacity .3s;
+}
+.flip-dev.flip-on::after{opacity:1;bottom:10px}
+/* 开盖态：整机放大成大屏 */
+.flip-dev.flip-on{
+  width:min(94vw,460px);height:min(92svh,860px);
+}
+/* ============ 盖（外屏） ============ */
+.flip-lid{
+  position:absolute;inset:0;z-index:5;
+  transform-origin:50% 100%;
+  transform-style:preserve-3d;
+  cursor:pointer;
+  transition:transform .62s cubic-bezier(.32,.72,.22,1);
+  border-radius:44px;overflow:hidden;
+}
+.flip-dev.flip-on .flip-lid{transform:rotateX(-178deg);pointer-events:none}
+.flip-lidF{ /* 盖面=外屏 */
+  position:absolute;inset:0;border-radius:44px;
+  backface-visibility:hidden;
+  background:linear-gradient(155deg,#0b0d10,#050608);
+  display:flex;flex-direction:column;
+  padding:clamp(20px,7%,34px) clamp(18px,8%,30px);
+  overflow:hidden;
+}
+.flip-lidB{ /* 盖背 */
+  position:absolute;inset:0;border-radius:44px;
+  background:linear-gradient(150deg,#2c3037,#1b1e22);
+  transform:rotateX(180deg);backface-visibility:hidden;
+  display:flex;align-items:center;justify-content:center;
+}
+.flip-lidB::before{content:"";width:46px;height:46px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#4a5058,#22252a);box-shadow:inset 0 1px 2px rgba(255,255,255,.18)}
+/* --- 外屏内容 --- */
+.flip-cov-top{display:flex;justify-content:space-between;align-items:center;color:#6b7280;font-size:12px;letter-spacing:.5px}
+.flip-cov-top .flip-brand{color:#d4a664;font-weight:600;letter-spacing:2px;font-size:11px}
+.flip-clock{
+  color:#f5f3ee;font-weight:200;font-variant-numeric:tabular-nums;
+  font-size:clamp(56px,17vw,84px);line-height:1.04;margin-top:clamp(14px,4%,26px);
+  letter-spacing:-1px;
+}
+.flip-clock .flip-colon{animation:flip-blink 2s step-end infinite;color:#d4a664}
+@keyframes flip-blink{0%,100%{opacity:1}50%{opacity:.25}}
+.flip-clock .flip-ap{font-size:.32em;font-weight:400;color:#8a929e;margin-left:8px;letter-spacing:1px}
+.flip-cov-date{color:#9aa3af;font-size:15px;margin-top:6px}
+.flip-widgets{margin-top:auto;display:flex;flex-direction:column;gap:10px}
+.flip-wg{
+  background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.07);
+  border-radius:16px;padding:12px 14px;backdrop-filter:blur(6px);
+}
+.flip-wg-k{color:#7c8492;font-size:11px;letter-spacing:1px;margin-bottom:5px}
+.flip-wg-v{color:#e8e4da;font-size:14px;line-height:1.5;display:flex;align-items:center;gap:6px;min-height:21px}
+.flip-wg-v .flip-wg-emoji{font-size:18px}
+.flip-hint{
+  margin-top:12px;text-align:center;color:#565d68;font-size:12px;letter-spacing:3px;
+}
+.flip-hint b{color:#d4a664;font-weight:500}
+/* ============ 底座（内屏=笔记本） ============ */
+.flip-base{position:absolute;inset:0;z-index:1;border-radius:44px;overflow:hidden;
+  background:#0a0b0d;visibility:hidden}
+.flip-dev.flip-on .flip-base{visibility:visible}
+/* --- 内页 --- */
+.flip-in{
+  position:absolute;inset:0;border-radius:44px;overflow:hidden;
+  background:linear-gradient(180deg,#faf7f0,#f4efe4);
+  display:flex;flex-direction:column;
+}
+.flip-bar{
+  display:flex;align-items:center;gap:8px;
+  padding:14px 16px 10px;
+}
+.flip-ib{
+  width:38px;height:38px;border-radius:50%;border:none;flex:none;
+  background:rgba(20,20,20,.06);color:#2a2723;font-size:17px;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:background .15s,transform .12s;
+}
+.flip-ib:active{transform:scale(.9);background:rgba(20,20,20,.12)}
+.flip-date{
+  flex:1;text-align:center;min-width:0;
+}
+.flip-date-d{font-size:17px;font-weight:650;color:#23201b;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.flip-date-s{font-size:11px;color:#a09a8c;margin-top:1px;letter-spacing:1.5px}
+.flip-today-btn{
+  margin-left:8px;flex:none;border:none;cursor:pointer;
+  background:#23201b;color:#f6f2e8;font-size:12px;font-weight:600;
+  padding:8px 14px;border-radius:999px;letter-spacing:1px;
+  transition:transform .12s,opacity .2s;
+}
+.flip-today-btn:active{transform:scale(.93)}
+.flip-today-btn.flip-hide{display:none}
+/* --- 纸 --- */
+.flip-paper-wrap{flex:1;min-height:0;padding:0 16px;position:relative}
+.flip-paper{
+  height:100%;border-radius:20px;position:relative;overflow:hidden;
+  background:
+    linear-gradient(90deg,transparent 34px,#e7b7bb 34px,#e7b7bb 35.5px,transparent 35.5px),
+    repeating-linear-gradient(180deg,transparent 0px,transparent 39px,#e3dccc 39px,#e3dccc 40.5px),
+    linear-gradient(180deg,#fbf8f1,#f6f1e6);
+  box-shadow:0 2px 10px rgba(60,50,30,.08),inset 0 0 0 1px rgba(120,100,60,.06);
+  transition:transform .2s ease,opacity .2s ease;
+}
+.flip-paper.fx-out-l{transform:translateX(-34px);opacity:0}
+.flip-paper.fx-out-r{transform:translateX(34px);opacity:0}
+.flip-paper.fx-in-l{transform:translateX(34px);opacity:0;transition:none}
+.flip-paper.fx-in-r{transform:translateX(-34px);opacity:0;transition:none}
+.flip-ta{
+  position:absolute;inset:0;border:none;outline:none;resize:none;
+  background:transparent;width:100%;height:100%;
+  padding:6px 18px 10px 52px;
+  font-family:inherit;font-size:17px;line-height:40px;color:#2c2820;
+  caret-color:#c0704f;
+}
+.flip-ta::placeholder{color:#c5bfae}
+/* --- 底部印章栏 --- */
+.flip-foot{
+  display:flex;align-items:center;gap:6px;
+  padding:10px 16px 18px;flex-wrap:nowrap;overflow-x:auto;
+  scrollbar-width:none;
+}
+.flip-foot::-webkit-scrollbar{display:none}
+.flip-seal{
+  flex:none;width:44px;height:44px;border-radius:50%;border:1.5px dashed #c8c0ab;
+  background:transparent;font-size:20px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;filter:grayscale(1);opacity:.55;
+}
+.flip-seal:active{transform:scale(.85)}
+.flip-seal.flip-onduty{
+  filter:none;opacity:1;border:1.5px solid #d98a63;background:rgba(217,138,99,.12);
+  box-shadow:0 2px 8px rgba(217,138,99,.25);
+  transform:scale(1.06);
+}
+.flip-cnt{
+  flex:none;margin-left:auto;padding-left:8px;
+  font-size:11px;color:#a29b8b;letter-spacing:1px;white-space:nowrap;
+}
+.flip-close{
+  position:absolute;right:16px;bottom:18px;z-index:9;
+  border:none;cursor:pointer;
+  background:#23201b;color:#f6f2e8;
+  font-size:12px;font-weight:600;letter-spacing:1px;
+  padding:11px 18px;border-radius:999px;
+  box-shadow:0 6px 16px rgba(0,0,0,.28);
+  transition:transform .12s;
+}
+.flip-close:active{transform:scale(.93)}
+@media (max-width:380px){
+  .flip-seal{width:40px;height:40px;font-size:18px}
+}
+</style>
+</head>
+<body>
+<div class="flip-scene">
+  <div class="flip-dev" id="dev">
+    <div class="flip-base">
+      <div class="flip-in">
+        <div class="flip-bar">
+          <button class="flip-ib" id="btnPrev" aria-label="前一天">‹</button>
+          <div class="flip-date">
+            <div class="flip-date-d" id="dateD">—</div>
+            <div class="flip-date-s" id="dateS">—</div>
+          </div>
+          <button class="flip-ib" id="btnNext" aria-label="后一天">›</button>
+          <button class="flip-today-btn flip-hide" id="btnToday">回今天</button>
+        </div>
+        <div class="flip-paper-wrap">
+          <div class="flip-paper" id="paper">
+            <textarea class="flip-ta" id="ta" placeholder="今天写点什么…" spellcheck="false"></textarea>
+          </div>
+        </div>
+        <div class="flip-foot" id="foot"></div>
+      </div>
+      <button class="flip-close" id="btnClose">合上 ⌄</button>
+    </div>
+    <div class="flip-lid" id="lid">
+      <div class="flip-lidF">
+        <div class="flip-cov-top">
+          <span class="flip-brand">FLIP.</span>
+          <span id="covTopR">—</span>
+        </div>
+        <div class="flip-clock"><span id="clkH">--</span><span class="flip-colon">:</span><span id="clkM">--</span><span class="flip-ap" id="clkAp"></span></div>
+        <div class="flip-cov-date" id="covDate">—</div>
+        <div class="flip-widgets">
+          <div class="flip-wg">
+            <div class="flip-wg-k">今日字数</div>
+            <div class="flip-wg-v" id="wgWords">还没写字</div>
+          </div>
+          <div class="flip-wg">
+            <div class="flip-wg-k">今日心情</div>
+            <div class="flip-wg-v" id="wgMood">—</div>
+          </div>
+        </div>
+        <div class="flip-hint">点按外屏 · <b>翻开本子</b></div>
+      </div>
+      <div class="flip-lidB"></div>
+    </div>
+  </div>
+</div>
+<script>
+/* ===== 工具 ===== */
+var $=function(id){return document.getElementById(id)};
+var pad=function(n){return n<10?'0'+n:''+n};
+var WD=['周日','周一','周二','周三','周四','周五','周六'];
+function key(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
+function today(){var t=new Date();return new Date(t.getFullYear(),t.getMonth(),t.getDate())}
+function fmtD(d){return WD[d.getDay()]+' · '+(d.getMonth()+1)+'月'+d.getDate()+'日'}
+function fmtS(d){var y=d.getFullYear();return d===today()?'TODAY':(y+' / '+pad(d.getMonth()+1)+' / '+pad(d.getDate()))}
+var cur=today();
+/* ===== 数据 ===== */
+function getNote(d){return localStorage.getItem('flip_note_'+key(d))||''}
+function setNote(d,v){v?localStorage.setItem('flip_note_'+key(d),v):localStorage.removeItem('flip_note_'+key(d))}
+function getMood(d){return localStorage.getItem('flip_mood_'+key(d))||''}
+function setMood(d,v){var m=getMood(d);if(m===v)v='';v?localStorage.setItem('flip_mood_'+key(d),v):localStorage.removeItem('flip_mood_'+key(d))}
+/* ===== PWA 图标 ===== */
+(function(){
+  var svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">'
+   +'<rect width="512" height="512" rx="110" fill="#14161a"/>'
+   +'<g transform="rotate(-18 256 300)">'
+   +'<rect x="130" y="150" width="252" height="330" rx="34" fill="#f6f1e6"/>'
+   +'<rect x="130" y="258" width="252" height="222" rx="34" fill="#e8dfcc"/>'
+   +'<rect x="160" y="300" width="150" height="14" rx="7" fill="#c9be9f"/>'
+   +'<rect x="160" y="336" width="190" height="14" rx="7" fill="#c9be9f"/>'
+   +'<rect x="160" y="372" width="120" height="14" rx="7" fill="#c9be9f"/>'
+   +'<rect x="236" y="150" width="40" height="16" fill="#d4a664"/>'
+   +'</g></svg>';
+  var url='data:image/svg+xml;base64,'+btoa(svg);
+  var mk=function(s){return {name:'flip.',short_name:'flip.',display:'standalone',background_color:'#14161a',theme_color:'#14161a',start_url:'.',icons:[{src:url,sizes:s,type:'image/svg+xml'}]}};
+  $('favIcon').href=url;$('appleIcon').href=url;
+  var m=document.createElement('link');m.rel='manifest';
+  m.href='data:application/json;base64,'+btoa(JSON.stringify(mk('any')));
+  document.head.appendChild(m);
+})();
+/* ===== 外屏时钟 ===== */
+function tick(){
+  var t=new Date(),h=t.getHours(),m=t.getMinutes();
+  $('clkH').textContent=pad(h);$('clkM').textContent=pad(m);
+  $('clkAp').textContent='';
+  $('covTopR').textContent=fmtD(today()).split(' · ')[0];
+  $('covDate').textContent=fmtD(today());
+}
+setInterval(tick,1000);tick();
+/* ===== 外屏小组件 ===== */
+function renderCover(){
+  var n=getNote(today());
+  $('wgWords').textContent=n?n.replace(/\s+/g,' ').length+' 字':'还没写字';
+  var mo=getMood(today());
+  $('wgMood').innerHTML=mo?'<span class="flip-wg-emoji">'+mo+'</span>记下了':'—';
+}
+/* ===== 印章 ===== */
+var SEALS=['☺️','🌤️','🌧️','💪','✨','🫶','☕️','🌙'];
+(function(){
+  var f=$('foot');
+  SEALS.forEach(function(e){
+    var b=document.createElement('button');b.className='flip-seal';b.textContent=e;
+    b.addEventListener('touchstart',function(ev){ev.preventDefault()},{passive:false});
+    b.addEventListener('mousedown',function(ev){ev.preventDefault()});
+    b.addEventListener('click',function(){pick(e)});
+    f.appendChild(b);
+  });
+  var c=document.createElement('span');c.className='flip-cnt';c.id='cnt';f.appendChild(c);
+})();
+function pick(e){
+  setMood(cur,e);renderSeals();renderCover();
+}
+function renderSeals(){
+  var mo=getMood(cur);
+  document.querySelectorAll('.flip-seal').forEach(function(b){
+    b.classList.toggle('flip-onduty',b.textContent===mo);
+  });
+  var n=$('ta').value;
+  $('cnt').textContent=n?(n.replace(/\s+/g,' ').length+' 字'):'';
+}
+/* ===== 内页 ===== */
+function renderPage(){
+  var n=getNote(cur);
+  $('ta').value=n;
+  $('dateD').textContent=fmtD(cur);
+  $('dateS').textContent=fmtS(cur);
+  $('btnToday').classList.toggle('flip-hide',cur.getTime()===today().getTime());
+  renderSeals();
+}
+var saveT=null;
+$('ta').addEventListener('input',function(){
+  clearTimeout(saveT);
+  saveT=setTimeout(function(){setNote(cur,$('ta').value);renderSeals();renderCover()},300);
+});
+$('ta').addEventListener('focusin',function(){
+  setTimeout(function(){$('ta').scrollIntoView({block:'center',behavior:'smooth'})},260);
+});
+/* ===== 翻页 ===== */
+function shift(dir){ /* -1 上一页 1 下一页 */
+  clearTimeout(saveT);setNote(cur,$('ta').value);
+  var p=$('paper');
+  p.classList.add(dir>0?'fx-out-l':'fx-out-r');
+  setTimeout(function(){
+    cur.setDate(cur.getDate()+dir);
+    renderPage();
+    p.classList.remove('fx-out-l','fx-out-r');
+    p.classList.add(dir>0?'fx-in-r':'fx-in-l');
+    requestAnimationFrame(function(){requestAnimationFrame(function(){
+      p.classList.remove('fx-in-r','fx-in-l');
+    })});
+  },200);
+}
+$('btnPrev').addEventListener('click',function(){shift(-1)});
+$('btnNext').addEventListener('click',function(){shift(1)});
+$('btnToday').addEventListener('click',function(){
+  clearTimeout(saveT);setNote(cur,$('ta').value);
+  var t=today();var dir=t>cur?1:-1;cur=t;renderPage();renderCover();
+});
+/* swipe 翻页（起点在输入框内则忽略） */
+var sx=0,sy=0,inTa=false;
+document.addEventListener('touchstart',function(e){
+  inTa=(e.target===$('ta'));
+  sx=e.touches[0].clientX;sy=e.touches[0].clientY;
+},{passive:true});
+document.addEventListener('touchend',function(e){
+  if(inTa)return;
+  var dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
+  if(Math.abs(dx)>64&&Math.abs(dx)>Math.abs(dy)*1.6){
+    shift(dx<0?1:-1);
+  }
+},{passive:true});
+/* ===== 开合盖 ===== */
+function openLid(){
+  $('dev').classList.add('flip-on');
+  setTimeout(function(){
+    renderPage();$('ta').blur();
+  },60);
+  var lid=$('lid');
+  lid.addEventListener('transitionend',function h(){
+    lid.removeEventListener('transitionend',h);
+    if($('dev').classList.contains('flip-on'))lid.style.visibility='hidden';
+  });
+}
+function closeLid(){
+  clearTimeout(saveT);setNote(cur,$('ta').value);
+  var lid=$('lid');
+  lid.style.visibility='';
+  $('dev').classList.remove('flip-on');
+  renderCover();tick();
+  $('ta').blur();
+}
+$('lid').addEventListener('click',function(){
+  if(!$('dev').classList.contains('flip-on'))openLid();
+});
+$('btnClose').addEventListener('click',function(e){e.stopPropagation();closeLid()});
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'&&$('dev').classList.contains('flip-on'))closeLid();
+});
+/* 初始化 */
+renderCover();renderPage();
+</script>
+</body>
+</html>
